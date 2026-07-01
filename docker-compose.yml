@@ -13,11 +13,6 @@ services:
       # rebuilds. Without this, every rebuild would wipe all registered
       # users, since the container's own filesystem is thrown away.
       - db-data:/app/data
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
   website:
     build: ./website
     volumes:
@@ -25,6 +20,8 @@ services:
     command: [nginx-debug, "-g", "daemon off;"]
     ports:
       - "8080:80"
+    depends_on:
+      - server
     environment:
       - NGINX_PORT=80
 
