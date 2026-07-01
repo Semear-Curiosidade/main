@@ -1,11 +1,32 @@
 services:
-  web:
-    build: .
+  server:
+    build: ./server
+    ports:
+      - "8000:8000"
+    environment:
+      # "*" is fine for local testing; if you deploy this anywhere real,
+      # set this to the frontend's actual origin instead (e.g.
+      # "http://your-frontend-domain.com") so only it can call the API.
+      - ALLOWED_ORIGINS=*
+    volumes:
+      # Named volume so the SQLite file survives `docker compose down` /
+      # rebuilds. Without this, every rebuild would wipe all registered
+      # users, since the container's own filesystem is thrown away.
+      - db-data:/app/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  website:
+    build: ./website
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./data/data.json:/usr/share/nginx/html/data.json:ro
     command: [nginx-debug, "-g", "daemon off;"]
     ports:
       - "8080:80"
     environment:
       - NGINX_PORT=80
+
+volumes:
+  db-data:
